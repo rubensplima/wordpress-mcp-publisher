@@ -1,74 +1,87 @@
 # WordPress MCP Publisher
 
-A generic MCP server that connects MCP-compatible clients to WordPress through the native WordPress REST API.
+**Português | [English](README.en.md)**
 
-It focuses on the article publishing workflow: posts, categories, tags, Media Library uploads and featured images. The core integration does not depend on Yoast, Rank Math, Elementor or another WordPress plugin.
+Servidor MCP genérico que conecta clientes compatíveis com o **Model Context Protocol (MCP)** ao WordPress por meio da REST API nativa.
 
-## Current version — 0.4.0
+O projeto foi construído em torno de um fluxo real de publicação de artigos: posts, categorias, tags, upload para a Media Library e definição de imagem destacada. O núcleo da integração não depende de Yoast, Rank Math, Elementor ou outro plugin específico do WordPress.
 
-The reference implementation has been validated end to end against a real WordPress installation. This public edition contains no production credentials, site-specific URLs or test IDs.
+## Versão atual — 0.4.0
 
-The server uses **MCP Streamable HTTP** at `/mcp` and exposes **10 tools**.
+A implementação de referência foi validada de ponta a ponta com uma instalação real do WordPress. Esta edição pública foi preparada sem credenciais de produção, URLs específicas da instalação privada ou IDs usados nos testes.
 
-## Tools
+O servidor utiliza **MCP Streamable HTTP** no endpoint `/mcp` e expõe atualmente **10 ferramentas**.
 
-| Tool | Type | Purpose |
+## Ferramentas
+
+| Ferramenta | Tipo | Função |
 | --- | --- | --- |
-| `verificarUsuario` | read | Verify the authenticated WordPress user |
-| `listarPosts` | read | List and search posts |
-| `obterPost` | read | Retrieve a post by ID, including editable content and `featured_media` |
-| `listarCategorias` | read | List and search existing categories |
-| `listarTags` | read | List and search existing tags |
-| `criarTag` | write | Create a tag after checking for an equivalent name or slug |
-| `criarPost` | write | Create a post; defaults to `draft` |
-| `atualizarPost` | write | Update a post by ID using only supplied fields |
-| `enviarMidia` | write | Upload a user-authorized image to the WordPress Media Library |
-| `definirImagemDestacada` | write | Associate an existing image with a post's `featured_media` |
+| `verificarUsuario` | leitura | Verifica o usuário autenticado no WordPress |
+| `listarPosts` | leitura | Lista e pesquisa posts |
+| `obterPost` | leitura | Obtém um post pelo ID, incluindo conteúdo editável e `featured_media` |
+| `listarCategorias` | leitura | Lista e pesquisa categorias existentes |
+| `listarTags` | leitura | Lista e pesquisa tags existentes |
+| `criarTag` | escrita | Cria uma tag após verificar nome ou slug equivalente |
+| `criarPost` | escrita | Cria um post; o padrão é `draft` |
+| `atualizarPost` | escrita | Atualiza um post pelo ID usando somente os campos fornecidos |
+| `enviarMidia` | escrita | Envia uma imagem autorizada pelo usuário para a Media Library |
+| `definirImagemDestacada` | escrita | Associa uma imagem existente ao `featured_media` de um post |
 
-Tool names are currently kept in Portuguese because they are part of the tested 0.4.0 API surface.
+Os nomes das ferramentas permanecem em português porque fazem parte da API testada da versão 0.4.0.
 
-## Safety defaults
+## Proteções de escrita
 
-- New posts default to `draft`.
-- Publishing requires the caller to explicitly send `status: "publish"`.
-- Post creation checks for duplicate titles and slugs.
-- Post updates require an ID and preserve status when `status` is omitted.
-- Tag creation checks existing names and slugs first.
-- Categories are read-only in this release; there is no `criarCategoria`.
-- Media upload accepts JPEG, PNG, WebP and GIF, with an 8 MB application limit.
-- Existing featured images are not silently replaced; replacement requires `substituir: true`.
-- The server does not expose delete tools.
+O projeto foi pensado para reduzir alterações acidentais no WordPress:
 
-## Architecture
+- novos posts usam `draft` por padrão;
+- publicação exige que o cliente envie explicitamente `status: "publish"`;
+- a criação de posts verifica duplicidade por título e slug;
+- atualizações exigem o ID do post e preservam o status quando `status` não é informado;
+- a criação de tags pesquisa primeiro nomes e slugs equivalentes;
+- categorias são somente leitura nesta versão — não existe `criarCategoria`;
+- o upload aceita JPEG, PNG, WebP e GIF, com limite interno de 8 MB;
+- uma imagem destacada existente não é substituída silenciosamente — a troca exige `substituir: true`;
+- o servidor não expõe ferramentas de exclusão.
+
+## Arquitetura
 
 ```text
-MCP-compatible client
-        |
-        v
+Cliente compatível com MCP
+          |
+          v
 WordPress MCP Publisher
-        |
-        v
+          |
+          v
 WordPress REST API
-        |
-        v
-Your WordPress site
+          |
+          v
+Seu site WordPress
 ```
 
-## Requirements
+As credenciais permanecem no ambiente do servidor MCP e não são enviadas como argumentos das ferramentas.
+
+## Requisitos
 
 - Node.js 20+
-- WordPress with HTTPS
-- A WordPress user with appropriate permissions
-- A WordPress Application Password
+- WordPress acessível por HTTPS
+- usuário WordPress com as permissões necessárias para as operações desejadas
+- uma Application Password do WordPress
 
-## Configuration
+## Instalação
+
+Clone o repositório e instale as dependências:
 
 ```bash
 npm install
+```
+
+Crie seu arquivo local de configuração a partir do exemplo:
+
+```bash
 cp .env.example .env
 ```
 
-Configure `.env`:
+Configure o `.env`:
 
 ```env
 WORDPRESS_URL=https://example.com
@@ -77,48 +90,114 @@ WORDPRESS_APPLICATION_PASSWORD=your-application-password
 PORT=3000
 ```
 
-Never commit `.env`. See [SECURITY.md](SECURITY.md).
+Nunca versione o arquivo `.env`. Consulte [SECURITY.md](SECURITY.md).
 
-## Run
+## Execução
 
 ```bash
 npm start
 ```
 
-Endpoints: `/`, `/health`, and `/mcp`.
+Endpoints disponíveis:
 
-For remote use, deploy behind HTTPS and configure the MCP client with `https://your-mcp-host.example/mcp`.
+- `/` — identificação do serviço e versão;
+- `/health` — verificação da configuração necessária;
+- `/mcp` — endpoint MCP Streamable HTTP.
 
-## Media workflow
+Para uso remoto, publique o serviço Node.js atrás de HTTPS e configure o cliente MCP para acessar:
 
 ```text
-image file -> enviarMidia -> Media Library -> media_id
-                                      |
-                                      v
-                         definirImagemDestacada
-                                      |
-                                      v
-                           post.featured_media
+https://your-mcp-host.example/mcp
 ```
 
-The file-input contract used by `enviarMidia` is designed for clients that support OpenAI-style MCP file parameters. Other MCP clients may require an adapter or a different file transport.
+## Sessões MCP
 
-## Scope
+O servidor mantém os transports associados ao `mcp-session-id` entre as requisições.
 
-Included: posts, category listing, tags, native Media Library image uploads, and controlled featured-image assignment.
+```text
+initialize
+    |
+    v
+mcp-session-id
+    |
+    v
+tools/list
+    |
+    v
+tools/call
+```
 
-Out of scope: deletion, category creation, media transformation, plugin-specific SEO integrations, and arbitrary remote-file fetching.
+Um ID de sessão desconhecido é rejeitado em vez de provocar silenciosamente a criação de uma nova sessão.
 
-## Version history
+## Fluxo de mídia
 
-**0.1.x** — authentication, post listing and creation.
+A versão 0.4.0 permite receber uma imagem autorizada pelo cliente e enviá-la à Media Library nativa:
 
-**0.2.0** — post retrieval/updates and persistent MCP sessions.
+```text
+arquivo de imagem
+       |
+       v
+   enviarMidia
+       |
+       v
+Media Library
+       |
+       v
+    media_id
+       |
+       v
+definirImagemDestacada
+       |
+       v
+post.featured_media
+```
 
-**0.3.0** — category/tag tools and duplicate protections.
+O contrato de file input de `enviarMidia` foi desenvolvido para clientes com suporte a parâmetros de arquivo MCP no formato utilizado pela OpenAI. Outros clientes MCP podem exigir um adaptador ou outra forma de transporte de arquivos.
 
-**0.4.0** — client file input, Media Library uploads and controlled `featured_media`.
+## Checklist de implantação
 
-## License
+1. Configure as credenciais como variáveis de ambiente da hospedagem.
+2. Publique o serviço Node.js atrás de HTTPS.
+3. Verifique os endpoints `/` e `/health`.
+4. Inicialize uma nova sessão MCP.
+5. Valide `tools/list`.
+6. Teste primeiro as ferramentas somente de leitura.
+7. Faça os primeiros testes de escrita em um post de teste ou rascunho.
+8. Depois de alterar schemas de ferramentas, atualize o catálogo no cliente MCP.
 
-MIT. See [LICENSE](LICENSE).
+## Escopo da versão 0.4.0
+
+Incluído:
+
+- verificação do usuário WordPress autenticado;
+- listagem, leitura, criação e atualização controlada de posts;
+- listagem de categorias;
+- listagem e criação de tags com proteção contra duplicidade;
+- upload de imagens para a Media Library nativa;
+- associação controlada de imagem destacada.
+
+Fora do escopo:
+
+- edição, transformação ou exclusão de imagens;
+- criação de categorias;
+- exclusão de posts, categorias ou tags;
+- integrações específicas com plugins de SEO;
+- download arbitrário de arquivos remotos.
+
+## Histórico resumido
+
+**0.1.x** — autenticação, listagem e criação de posts.
+
+**0.2.0** — leitura e atualização controlada de posts, além de sessões MCP persistentes.
+
+**0.3.0** — ferramentas de categorias e tags e proteções contra duplicidade.
+
+**0.4.0** — file input do cliente, upload para a Media Library, suporte a `featured_media` e associação controlada de imagem destacada.
+
+## Segurança
+
+Este repositório público não contém as credenciais ou configurações da instalação usada no desenvolvimento. Para uma implantação própria, mantenha segredos exclusivamente em variáveis de ambiente e siga as orientações de [SECURITY.md](SECURITY.md).
+
+## Licença
+
+Distribuído sob a licença MIT. Consulte [LICENSE](LICENSE).
