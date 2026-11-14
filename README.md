@@ -62,7 +62,7 @@ As credenciais permanecem no ambiente do servidor MCP e não são enviadas como 
 
 ## Requisitos
 
-- Node.js 20+
+- Node.js 20.12.0 ou superior
 - WordPress acessível por HTTPS
 - usuário WordPress com as permissões necessárias para as operações desejadas
 - uma Application Password do WordPress
@@ -91,6 +91,26 @@ PORT=3000
 ```
 
 Nunca versione o arquivo `.env`. Consulte [SECURITY.md](SECURITY.md).
+
+
+### Formas de configuração
+
+O WordPress MCP Publisher aceita duas formas de configuração:
+
+**1. Arquivo `.env` (desenvolvimento local)**
+
+Crie o arquivo `.env` na raiz do projeto e configure as variáveis necessárias. Ao executar `npm start`, o servidor carrega automaticamente esse arquivo.
+
+**2. Variáveis de ambiente (servidores e hospedagens)**
+
+Configure `WORDPRESS_URL`, `WORDPRESS_USERNAME`, `WORDPRESS_APPLICATION_PASSWORD` e, opcionalmente, `PORT` diretamente no ambiente de execução.
+
+Nesse caso, não é necessário criar um arquivo `.env`. O servidor utiliza as variáveis fornecidas pela hospedagem.
+
+Se o arquivo `.env` existir, as variáveis já definidas no ambiente têm precedência sobre os valores do arquivo.
+
+**Segurança:** nunca inclua credenciais reais no código-fonte, no repositório Git ou em arquivos de exemplo.
+
 
 ## Execução
 

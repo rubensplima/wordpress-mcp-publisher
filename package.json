@@ -9,7 +9,7 @@
     "start": "node src/start.js"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=20.12.0"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.2",
