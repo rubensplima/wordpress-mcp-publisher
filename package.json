@@ -6,7 +6,7 @@
   "description": "Generic MCP server for managing WordPress posts, taxonomies and featured images through the native WordPress REST API",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/server.js"
+    "start": "node src/start.js"
   },
   "engines": {
     "node": ">=20"
