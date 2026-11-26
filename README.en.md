@@ -6,7 +6,7 @@ A generic MCP server that connects MCP-compatible clients to WordPress through t
 
 It focuses on the article publishing workflow: posts, categories, tags, Media Library uploads and featured images. The core integration does not depend on Yoast, Rank Math, Elementor or another WordPress plugin.
 
-## Current version — 0.4.0
+## Current version — 0.4.1
 
 The reference implementation has been validated end to end against a real WordPress installation. This public edition contains no production credentials, site-specific URLs or test IDs.
 
@@ -58,7 +58,7 @@ Your WordPress site
 
 ## Requirements
 
-- Node.js 20+
+- Node.js 20.6+
 - WordPress with HTTPS
 - A WordPress user with appropriate permissions
 - A WordPress Application Password
@@ -77,6 +77,7 @@ WORDPRESS_URL=https://example.com
 WORDPRESS_USERNAME=your-wordpress-user
 WORDPRESS_APPLICATION_PASSWORD=your-application-password
 PORT=3000
+PRIVATE_MODE=true
 ```
 
 Never commit `.env`. See [SECURITY.md](SECURITY.md).
@@ -84,12 +85,18 @@ Never commit `.env`. See [SECURITY.md](SECURITY.md).
 ## Run
 
 ```bash
-npm start
+node --env-file=.env src/server.js
 ```
 
 Endpoints: `/`, `/health`, and `/mcp`.
 
-For remote use, deploy behind HTTPS and configure the MCP client with `https://your-mcp-host.example/mcp`.
+Remote use requires HTTPS **and independent authentication/access control**. See [SECURITY.md](SECURITY.md).
+
+## Maintenance mode
+
+MCP is blocked by default (HTTP 503). Set PRIVATE_MODE=false only in an isolated local environment or behind verified authentication and authorization. Never expose an enabled endpoint publicly. This is not authentication. The server still binds to all interfaces; isolate it with a firewall or equivalent controls.
+
+Version 0.4.1 pins Zod 4.6.7, Express 5.3.0 and MCP SDK 1.32.2, limits category/tag arrays to 100 entries and adds the maintenance gate. The public branch requires its own runtime validation. Node.js 20 is no longer supported upstream; prefer a supported LTS.
 
 ## Media workflow
 
@@ -120,6 +127,8 @@ Out of scope: deletion, category creation, media transformation, plugin-specific
 **0.3.0** — category/tag tools and duplicate protections.
 
 **0.4.0** — client file input, Media Library uploads and controlled `featured_media`.
+
+**0.4.1** — dependency security maintenance, array limits and default maintenance gate.
 
 ## License
 
