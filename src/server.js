@@ -8,6 +8,14 @@ import { assertWordPressConfig, wpRequest, wpUploadMedia } from "./wordpress.js"
 
 const app = express();
 
+// Block MCP access unless explicitly enabled in a protected environment.
+app.use("/mcp", (req, res, next) => {
+  if (process.env.PRIVATE_MODE !== "false") {
+    return res.status(503).json({ error: "MCP temporarily unavailable" });
+  }
+  next();
+});
+
 app.use(express.json({ limit: "10mb" }));
 
 function textResult(data) {
@@ -475,9 +483,9 @@ function registerTools(server) {
         .enum(["draft", "pending", "private", "publish"])
         .default("draft"),
 
-      categories: z.array(z.number().int().positive()).optional(),
+      categories: z.array(z.number().int().positive()).max(100).optional(),
 
-      tags: z.array(z.number().int().positive()).optional(),
+      tags: z.array(z.number().int().positive()).max(100).optional(),
     },
     async ({
       title,
@@ -587,9 +595,9 @@ function registerTools(server) {
         .enum(["draft", "pending", "private", "publish"])
         .optional(),
 
-      categories: z.array(z.number().int().positive()).optional(),
+      categories: z.array(z.number().int().positive()).max(100).optional(),
 
-      tags: z.array(z.number().int().positive()).optional(),
+      tags: z.array(z.number().int().positive()).max(100).optional(),
     },
     async ({
       id,
@@ -668,7 +676,7 @@ function registerTools(server) {
 function createMcpServer() {
   const server = new McpServer({
     name: "wordpress-mcp-publisher",
-    version: "0.4.0",
+    version: "0.4.1",
   });
 
   registerTools(server);
@@ -685,7 +693,7 @@ app.get("/", (_req, res) => {
     service: "wordpress-mcp-publisher",
     status: "ok",
     mcp: "/mcp",
-    version: "0.4.0",
+    version: "0.4.1",
   });
 });
 
@@ -815,5 +823,5 @@ app.delete("/mcp", async (req, res) => {
 const port = process.env.PORT || 3000;
 
 app.listen(port, "0.0.0.0", () => {
-  console.log(`WordPress MCP Publisher 0.4.0 listening on port ${port}`);
+  console.log(`WordPress MCP Publisher 0.4.1 listening on port ${port}`);
 });
