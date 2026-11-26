@@ -6,7 +6,7 @@ Servidor MCP genérico que conecta clientes compatíveis com o **Model Context P
 
 O projeto foi construído em torno de um fluxo real de publicação de artigos: posts, categorias, tags, upload para a Media Library e definição de imagem destacada. O núcleo da integração não depende de Yoast, Rank Math, Elementor ou outro plugin específico do WordPress.
 
-## Versão atual — 0.4.0
+## Versão atual — 0.4.1
 
 A implementação de referência foi validada de ponta a ponta com uma instalação real do WordPress. Esta edição pública foi preparada sem credenciais de produção, URLs específicas da instalação privada ou IDs usados nos testes.
 
@@ -62,7 +62,7 @@ As credenciais permanecem no ambiente do servidor MCP e não são enviadas como 
 
 ## Requisitos
 
-- Node.js 20+
+- Node.js 20.6+
 - WordPress acessível por HTTPS
 - usuário WordPress com as permissões necessárias para as operações desejadas
 - uma Application Password do WordPress
@@ -88,6 +88,7 @@ WORDPRESS_URL=https://example.com
 WORDPRESS_USERNAME=your-wordpress-user
 WORDPRESS_APPLICATION_PASSWORD=your-application-password
 PORT=3000
+PRIVATE_MODE=true
 ```
 
 Nunca versione o arquivo `.env`. Consulte [SECURITY.md](SECURITY.md).
@@ -95,7 +96,7 @@ Nunca versione o arquivo `.env`. Consulte [SECURITY.md](SECURITY.md).
 ## Execução
 
 ```bash
-npm start
+node --env-file=.env src/server.js
 ```
 
 Endpoints disponíveis:
@@ -104,11 +105,13 @@ Endpoints disponíveis:
 - `/health` — verificação da configuração necessária;
 - `/mcp` — endpoint MCP Streamable HTTP.
 
-Para uso remoto, publique o serviço Node.js atrás de HTTPS e configure o cliente MCP para acessar:
+O uso remoto exige HTTPS **e autenticação e controle de acesso independentes**. Consulte [SECURITY.md](SECURITY.md).
 
-```text
-https://your-mcp-host.example/mcp
-```
+## Modo de manutenção
+
+O MCP fica bloqueado por padrão (HTTP 503). Defina PRIVATE_MODE=false somente em ambiente local isolado ou atrás de autenticação e autorização verificadas. Nunca exponha o endpoint habilitado publicamente. O bloqueio não é autenticação. O servidor escuta em todas as interfaces; isole-o com firewall ou controle equivalente.
+
+A versão 0.4.1 fixa Zod 4.6.7, Express 5.3.0 e MCP SDK 1.32.2, limita arrays de categorias e tags a 100 elementos e inclui o bloqueio temporário. A edição pública requer validação funcional própria. O Node.js 20 não recebe mais suporte oficial; prefira uma versão LTS suportada.
 
 ## Sessões MCP
 
@@ -157,7 +160,7 @@ O contrato de file input de `enviarMidia` foi desenvolvido para clientes com sup
 ## Checklist de implantação
 
 1. Configure as credenciais como variáveis de ambiente da hospedagem.
-2. Publique o serviço Node.js atrás de HTTPS.
+2. Configure HTTPS e controle de acesso independente antes de habilitar o MCP.
 3. Verifique os endpoints `/` e `/health`.
 4. Inicialize uma nova sessão MCP.
 5. Valide `tools/list`.
@@ -165,7 +168,7 @@ O contrato de file input de `enviarMidia` foi desenvolvido para clientes com sup
 7. Faça os primeiros testes de escrita em um post de teste ou rascunho.
 8. Depois de alterar schemas de ferramentas, atualize o catálogo no cliente MCP.
 
-## Escopo da versão 0.4.0
+## Escopo da versão 0.4.1
 
 Incluído:
 
@@ -193,6 +196,8 @@ Fora do escopo:
 **0.3.0** — ferramentas de categorias e tags e proteções contra duplicidade.
 
 **0.4.0** — file input do cliente, upload para a Media Library, suporte a `featured_media` e associação controlada de imagem destacada.
+
+**0.4.1** — manutenção de dependências, limites de arrays e bloqueio padrão do MCP.
 
 ## Segurança
 
