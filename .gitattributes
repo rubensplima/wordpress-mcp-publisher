@@ -1,0 +1,7 @@
+# Linguagens do projeto
+*.md linguist-detectable=true linguist-documentation=false
+
+# Arquivos excluídos das estatísticas
+*.pdf linguist-detectable=false
+*.png linguist-detectable=false
+*.jpg linguist-detectable=false
